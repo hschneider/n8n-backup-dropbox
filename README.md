@@ -21,3 +21,5 @@ Add your Telegram Bot URL and chat_id
 ## How it works
 All workflows are exported to a time stamped subfolder of the backup-folder.
 If the number of folders to keep is reached, the oldest folder is deleted.
+
+Star me, if you like it :-)
