@@ -1,0 +1,474 @@
+{
+  "name": "Backup n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const KEEP = 7;  // Number of folders to keep\nconst FOLDER = \"backup\";  // Backup folder\n\nconst items = $input.all();\nlet entries = [];\n\n// Collect raw entries returned by Dropbox List Folder\nfor (const item of items) {\n  if (item.json && Array.isArray(item.json.entries)) {\n    entries.push(...item.json.entries);\n  } else if (item.json) {\n    entries.push(item.json);\n  }\n}\n\n// Target only actual workflow backup directories\n//\nconst backupFolders = entries.filter(entry => {\n  const tag = entry['.tag'] || entry.type;\n  const name = entry.name || '';\n  \n  const isFolder = tag === 'folder';\n  const isNotFile = !name.endsWith('.json');\n  const matchesBackupName = name.endsWith('Workflows');\n  \n  return isFolder && isNotFile && matchesBackupName;\n});\n\n// Newest folders first \n//\nbackupFolders.sort((a, b) => b.name.localeCompare(a.name));\n\nif (backupFolders.length <= KEEP) {\n  return []; // Output nothing -> Delete node will not execute\n}\n\nconst foldersToDelete = backupFolders.slice(KEEP);\n\nreturn foldersToDelete.map(folder => ({\n  json: {\n    name: folder.name,\n    path: folder.pathDisplay || folder.pathLower || `/{FOLDER}/${folder.name}`\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -112
+      ],
+      "id": "d6e6bc8f-15ab-4214-afc7-6e7136fe4687",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "folder",
+        "operation": "delete",
+        "path": "={{ $json.path }}"
+      },
+      "type": "n8n-nodes-base.dropbox",
+      "typeVersion": 1,
+      "position": [
+        896,
+        -112
+      ],
+      "id": "0a03722d-6f5c-4031-8a80-58d6cd3eda8a",
+      "name": "Delete a folder",
+      "credentials": {
+        "dropboxOAuth2Api": {
+          "id": "wcPtvyo5RIYT1zlq",
+          "name": "Dropbox account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "path": "={{ $('Create a folder').item.json.path_display || $('Create a folder').item.json.metadata.path_display }}/{{ $('n8n').item.json.name }}.json",
+        "binaryData": true
+      },
+      "type": "n8n-nodes-base.dropbox",
+      "typeVersion": 1,
+      "position": [
+        720,
+        128
+      ],
+      "id": "4085d0b2-4399-4df8-966f-b50f1ffe59af",
+      "name": "Upload a file",
+      "credentials": {
+        "dropboxOAuth2Api": {
+          "id": "wcPtvyo5RIYT1zlq",
+          "name": "Dropbox account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "folder",
+        "operation": "list",
+        "path": "/backup",
+        "filters": {
+          "include_deleted": false
+        }
+      },
+      "type": "n8n-nodes-base.dropbox",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -112
+      ],
+      "id": "de1a7036-3e49-4bb1-8710-ba0a289846f1",
+      "name": "List a folder",
+      "executeOnce": true,
+      "credentials": {
+        "dropboxOAuth2Api": {
+          "id": "wcPtvyo5RIYT1zlq",
+          "name": "Dropbox account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "folder",
+        "path": "=/backup/{{ $now.format('yyyy-MM-dd HHmmss') }} Workflows"
+      },
+      "type": "n8n-nodes-base.dropbox",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        16
+      ],
+      "id": "a7d0f3b7-3595-4f8b-b497-cb368faf91be",
+      "name": "Create a folder",
+      "credentials": {
+        "dropboxOAuth2Api": {
+          "id": "wcPtvyo5RIYT1zlq",
+          "name": "Dropbox account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "9aea59bf-d8e3-4a71-885a-c784ca234f3c",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -480,
+        192
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "format": true,
+          "fileName": "={{ $json.name + \".json\" }}"
+        }
+      },
+      "id": "d4ce59a8-ff69-4f0e-9291-d3050f6ae067",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "position": [
+        544,
+        128
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "f2f726cf-b815-4bea-8bbd-41b7aa778d4d",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        320,
+        16
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "id": "97d22f4d-399f-428a-b5d4-fd6365079600",
+      "name": "n8n",
+      "type": "n8n-nodes-base.n8n",
+      "position": [
+        -112,
+        16
+      ],
+      "retryOnFail": true,
+      "typeVersion": 1,
+      "alwaysOutputData": true,
+      "credentials": {
+        "n8nApi": {
+          "id": "RAPu6k7z4VavCqWc",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "4a6f2bd3-b017-4595-9afb-742cd1996060",
+      "name": "On clicking 'execute'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -480,
+        -144
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/botXXX/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "12345"
+            },
+            {
+              "name": "text",
+              "value": "=✅ n8n Backup finished: \n{{ $('Create a folder').item.json.metadata.name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b8f96056-c632-4c3a-b476-cd1746a87f70",
+      "name": "Notify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        544,
+        -304
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5cce845c-dfbc-49cc-8457-67cc24f35f50",
+              "leftValue": "={{ $json.isArchived }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        80,
+        16
+      ],
+      "id": "cb0d6091-208e-417b-be36-e1c9114ba009",
+      "name": "Filter archived",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "Change backup folder name in the \"Create a folder\" Node",
+        "height": 80,
+        "width": 256
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -80
+      ],
+      "id": "85c4a513-675d-43aa-b48f-9c09870f5563",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Change backup folder name and number of backups to keep in the Code Node",
+        "height": 96
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        704,
+        -224
+      ],
+      "id": "e3faa28a-a882-4564-b84c-f371f66c9a19",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Adapt your notification settings or replace the Telegram Node",
+        "height": 96
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -416
+      ],
+      "id": "04138f14-1952-4b1d-acbc-ea6d8fa3116a",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Adapt scheduling here. Default is daily at 00:00",
+        "height": 80,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        320
+      ],
+      "id": "10b7235f-e118-4f0e-ad9f-b15e60818f9f",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -480,
+        16
+      ],
+      "id": "eebc6935-801f-4c29-b66a-07ef24c48122",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Delete a folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List a folder": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a folder": {
+      "main": [
+        [
+          {
+            "node": "n8n",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create a folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "List a folder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n": {
+      "main": [
+        [
+          {
+            "node": "Filter archived",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On clicking 'execute'": {
+      "main": [
+        [
+          {
+            "node": "Create a folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter archived": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Create a folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "26b2206c-5c17-4c3e-9bd5-858d62709efd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4abf595a1e2f4bbf25c14bb4797b0aebf8c0c39c4ebad755ee8fd9c333c183cf"
+  },
+  "nodeGroups": [],
+  "id": "iz95JiS11KkoRqvw",
+  "tags": []
+}
