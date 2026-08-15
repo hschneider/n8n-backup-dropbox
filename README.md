@@ -1,6 +1,8 @@
 # n8n-backup-dropbox
 Backup your n8n Workflows to a Dropbox folder
 
+![n8n-backup-workflows](README.assets/n8n-backup-workflows.jpeg)
+
 ## Install
 Import the workflow JSON into n8n.
 
