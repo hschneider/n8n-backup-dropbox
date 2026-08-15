@@ -10,7 +10,7 @@ Import the workflow JSON into n8n.
 ### Schedule Trigger:
 Adapt the scheduling. Default is daily at 00:00
 ### Create a folder
-Adpapt backup folder name
+Add your Dropbox credentials, adpapt the backup folder name
 ### Code in JavaScript
 Adapt the first 2 lines:
 ```js
