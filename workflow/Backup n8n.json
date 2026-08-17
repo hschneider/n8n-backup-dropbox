@@ -324,7 +324,9 @@
       "parameters": {
         "chatId": "8927327277",
         "text": "=✅ n8n Backup finished:  {{ $('Create a folder').item.json.metadata.name }}",
-        "additionalFields": {}
+        "additionalFields": {
+          "appendAttribution": false
+        }
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -335,6 +337,7 @@
       "id": "d2fe6f3c-01c3-4636-91de-17090d3a67b4",
       "name": "Notify End",
       "webhookId": "ced95483-5e28-4496-980a-79f70b627491",
+      "executeOnce": true,
       "credentials": {
         "telegramApi": {
           "id": "Jkby68Vqfr8r1ZtZ",
@@ -346,7 +349,9 @@
       "parameters": {
         "chatId": "8927327277",
         "text": "=n8n Backup started ...",
-        "additionalFields": {}
+        "additionalFields": {
+          "appendAttribution": false
+        }
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -523,7 +528,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "5331a7d8-a181-4868-92b5-91b0caad8051",
+  "versionId": "d6b42f1b-eb83-4be4-b2f5-4035bff4e446",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4abf595a1e2f4bbf25c14bb4797b0aebf8c0c39c4ebad755ee8fd9c333c183cf"
