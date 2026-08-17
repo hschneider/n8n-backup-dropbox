@@ -3,19 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "jsCode": "const KEEP = 7;  // Number of folders to keep\nconst FOLDER = \"backup\";  // Backup folder\n\nconst items = $input.all();\nlet entries = [];\n\n// Collect raw entries returned by Dropbox List Folder\nfor (const item of items) {\n  if (item.json && Array.isArray(item.json.entries)) {\n    entries.push(...item.json.entries);\n  } else if (item.json) {\n    entries.push(item.json);\n  }\n}\n\n// Target only actual workflow backup directories\n//\nconst backupFolders = entries.filter(entry => {\n  const tag = entry['.tag'] || entry.type;\n  const name = entry.name || '';\n  \n  const isFolder = tag === 'folder';\n  const isNotFile = !name.endsWith('.json');\n  const matchesBackupName = name.endsWith('Workflows');\n  \n  return isFolder && isNotFile && matchesBackupName;\n});\n\n// Newest folders first \n//\nbackupFolders.sort((a, b) => b.name.localeCompare(a.name));\n\nif (backupFolders.length <= KEEP) {\n  return []; // Output nothing -> Delete node will not execute\n}\n\nconst foldersToDelete = backupFolders.slice(KEEP);\n\nreturn foldersToDelete.map(folder => ({\n  json: {\n    name: folder.name,\n    path: folder.pathDisplay || folder.pathLower || `/{FOLDER}/${folder.name}`\n  }\n}));"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        720,
-        -112
-      ],
-      "id": "d6e6bc8f-15ab-4214-afc7-6e7136fe4687",
-      "name": "Code in JavaScript"
-    },
-    {
-      "parameters": {
         "authentication": "oAuth2",
         "resource": "folder",
         "operation": "delete",
@@ -27,7 +14,7 @@
         896,
         -112
       ],
-      "id": "0a03722d-6f5c-4031-8a80-58d6cd3eda8a",
+      "id": "8a64232b-cad6-49af-b04e-c62f66073f72",
       "name": "Delete a folder",
       "credentials": {
         "dropboxOAuth2Api": {
@@ -47,9 +34,9 @@
       "typeVersion": 1,
       "position": [
         720,
-        128
+        160
       ],
-      "id": "4085d0b2-4399-4df8-966f-b50f1ffe59af",
+      "id": "838af863-e4b7-4355-8b13-07269bc280d0",
       "name": "Upload a file",
       "credentials": {
         "dropboxOAuth2Api": {
@@ -74,7 +61,7 @@
         544,
         -112
       ],
-      "id": "de1a7036-3e49-4bb1-8710-ba0a289846f1",
+      "id": "393b3986-15a0-4c2f-87d4-afd817785028",
       "name": "List a folder",
       "executeOnce": true,
       "credentials": {
@@ -96,7 +83,7 @@
         -288,
         16
       ],
-      "id": "a7d0f3b7-3595-4f8b-b497-cb368faf91be",
+      "id": "f3a1eea7-3018-4c32-bd03-e44b4489ad9a",
       "name": "Create a folder",
       "credentials": {
         "dropboxOAuth2Api": {
@@ -113,7 +100,7 @@
           ]
         }
       },
-      "id": "9aea59bf-d8e3-4a71-885a-c784ca234f3c",
+      "id": "81162a33-2338-4ad0-a743-d82b34fe9535",
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "position": [
@@ -130,12 +117,12 @@
           "fileName": "={{ $json.name + \".json\" }}"
         }
       },
-      "id": "d4ce59a8-ff69-4f0e-9291-d3050f6ae067",
+      "id": "e84ea2cd-550e-403f-b9c9-41b2302b9ad4",
       "name": "Convert to File",
       "type": "n8n-nodes-base.convertToFile",
       "position": [
         544,
-        128
+        160
       ],
       "typeVersion": 1.1
     },
@@ -143,7 +130,7 @@
       "parameters": {
         "options": {}
       },
-      "id": "f2f726cf-b815-4bea-8bbd-41b7aa778d4d",
+      "id": "358d82f8-efaf-4c12-8aa1-1332845934ac",
       "name": "Loop Over Items",
       "type": "n8n-nodes-base.splitInBatches",
       "position": [
@@ -157,7 +144,7 @@
         "filters": {},
         "requestOptions": {}
       },
-      "id": "97d22f4d-399f-428a-b5d4-fd6365079600",
+      "id": "08da0aca-efc6-476a-9657-0b7bda4f8f2c",
       "name": "n8n",
       "type": "n8n-nodes-base.n8n",
       "position": [
@@ -176,7 +163,7 @@
     },
     {
       "parameters": {},
-      "id": "4a6f2bd3-b017-4595-9afb-742cd1996060",
+      "id": "410e3117-f1d5-4301-aa83-1ec92f11c560",
       "name": "On clicking 'execute'",
       "type": "n8n-nodes-base.manualTrigger",
       "position": [
@@ -184,35 +171,6 @@
         -144
       ],
       "typeVersion": 1
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/botXXX/sendMessage",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "chat_id",
-              "value": "12345"
-            },
-            {
-              "name": "text",
-              "value": "=✅ n8n Backup finished: \n{{ $('Create a folder').item.json.metadata.name }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "b8f96056-c632-4c3a-b476-cd1746a87f70",
-      "name": "Notify",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        544,
-        -304
-      ],
-      "executeOnce": true
     },
     {
       "parameters": {
@@ -242,60 +200,60 @@
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.3,
       "position": [
-        80,
+        96,
         16
       ],
-      "id": "cb0d6091-208e-417b-be36-e1c9114ba009",
+      "id": "8896748a-b226-4ae8-a10a-423c60b9daac",
       "name": "Filter archived",
       "alwaysOutputData": true
     },
     {
       "parameters": {
-        "content": "Change backup folder name in the \"Create a folder\" Node",
-        "height": 80,
+        "content": "**Create a folder**\nChange backup folder name in the \"Create a folder\" Node",
+        "height": 96,
         "width": 256
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -304,
-        -80
+        176
       ],
-      "id": "85c4a513-675d-43aa-b48f-9c09870f5563",
+      "id": "38f1e0e1-e8a2-4a17-a52d-70282cd98613",
       "name": "Sticky Note"
     },
     {
       "parameters": {
-        "content": "Change backup folder name and number of backups to keep in the Code Node",
-        "height": 96
+        "content": "**Code**\nChange backup folder name and number of backups to keep in the Code Node",
+        "height": 128
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        704,
-        -224
+        656,
+        16
       ],
-      "id": "e3faa28a-a882-4564-b84c-f371f66c9a19",
+      "id": "d0ce0661-3e1f-4ec4-81af-c65d7a2754ab",
       "name": "Sticky Note1"
     },
     {
       "parameters": {
-        "content": "Adapt your notification settings or replace the Telegram Node",
+        "content": "**Notify End**\nAdd your credentials or replace the Telegram Node",
         "height": 96
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        544,
-        -416
+        480,
+        -400
       ],
-      "id": "04138f14-1952-4b1d-acbc-ea6d8fa3116a",
+      "id": "053a76ca-b050-4e86-bd34-ebd868f274b7",
       "name": "Sticky Note2"
     },
     {
       "parameters": {
-        "content": "Adapt scheduling here. Default is daily at 00:00",
-        "height": 80,
+        "content": "**Schedule Trigger**\nAdapt scheduling here. Default is daily at 00:00",
+        "height": 96,
         "width": 208
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -304,7 +262,7 @@
         -544,
         320
       ],
-      "id": "10b7235f-e118-4f0e-ad9f-b15e60818f9f",
+      "id": "a6198e0b-4165-491c-9359-119b334b6180",
       "name": "Sticky Note3"
     },
     {
@@ -317,23 +275,98 @@
         -480,
         16
       ],
-      "id": "eebc6935-801f-4c29-b66a-07ef24c48122",
+      "id": "5d530249-978c-4aad-aed2-dfd5f121dd36",
       "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"redsult\": \"Backup finished!\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        720,
+        -288
+      ],
+      "id": "2c5b6cc9-6445-47f6-a3b8-bba84a12b06c",
+      "name": "Return result"
+    },
+    {
+      "parameters": {
+        "content": "**Notify Start**\nAdd your credentials or replace the Telegram Node",
+        "height": 112
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -272
+      ],
+      "id": "adfee415-b2a9-45b4-932e-c6bf1a9a33a8",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const KEEP = 10;  // Number of folders to keep\nconst FOLDER = \"backup\";  // Backup folder\n\nconst items = $input.all();\nlet entries = [];\n\n// Collect raw entries returned by Dropbox List Folder\nfor (const item of items) {\n  if (item.json && Array.isArray(item.json.entries)) {\n    entries.push(...item.json.entries);\n  } else if (item.json) {\n    entries.push(item.json);\n  }\n}\n\n// Target only actual workflow backup directories\n//\nconst backupFolders = entries.filter(entry => {\n  const tag = entry['.tag'] || entry.type;\n  const name = entry.name || '';\n  \n  const isFolder = tag === 'folder';\n  const isNotFile = !name.endsWith('.json');\n  const matchesBackupName = name.endsWith('Workflows');\n  \n  return isFolder && isNotFile && matchesBackupName;\n});\n\n// Newest folders first \n//\nbackupFolders.sort((a, b) => b.name.localeCompare(a.name));\n\nif (backupFolders.length <= KEEP) {\n  return []; // Output nothing -> Delete node will not execute\n}\n\nconst foldersToDelete = backupFolders.slice(KEEP);\n\nreturn foldersToDelete.map(folder => ({\n  json: {\n    name: folder.name,\n    path: folder.pathDisplay || folder.pathLower || `/{FOLDER}/${folder.name}`\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -112
+      ],
+      "id": "b78161ed-0f00-49b4-beed-039fbc776915",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "chatId": "8927327277",
+        "text": "=✅ n8n Backup finished:  {{ $('Create a folder').item.json.metadata.name }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        544,
+        -288
+      ],
+      "id": "d2fe6f3c-01c3-4636-91de-17090d3a67b4",
+      "name": "Notify End",
+      "webhookId": "ced95483-5e28-4496-980a-79f70b627491",
+      "credentials": {
+        "telegramApi": {
+          "id": "Jkby68Vqfr8r1ZtZ",
+          "name": "Telegram account Noto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8927327277",
+        "text": "=n8n Backup started ...",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -112,
+        -144
+      ],
+      "id": "0aa74c52-db6b-4e44-a3d8-f3b496bcae0c",
+      "name": "Notify Start",
+      "webhookId": "ced95483-5e28-4496-980a-79f70b627491",
+      "credentials": {
+        "telegramApi": {
+          "id": "Jkby68Vqfr8r1ZtZ",
+          "name": "Telegram account Noto"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "Delete a folder",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Upload a file": {
       "main": [
         [
@@ -349,7 +382,7 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript",
+            "node": "Code",
             "type": "main",
             "index": 0
           }
@@ -361,6 +394,11 @@
         [
           {
             "node": "n8n",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Start",
             "type": "main",
             "index": 0
           }
@@ -398,7 +436,7 @@
             "index": 0
           },
           {
-            "node": "Notify",
+            "node": "Notify End",
             "type": "main",
             "index": 0
           }
@@ -455,20 +493,42 @@
           }
         ]
       ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Delete a folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify End": {
+      "main": [
+        [
+          {
+            "node": "Return result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "26b2206c-5c17-4c3e-9bd5-858d62709efd",
+  "versionId": "5331a7d8-a181-4868-92b5-91b0caad8051",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4abf595a1e2f4bbf25c14bb4797b0aebf8c0c39c4ebad755ee8fd9c333c183cf"
   },
   "nodeGroups": [],
-  "id": "iz95JiS11KkoRqvw",
+  "id": "VlarGMxA98nGg3mY",
   "tags": []
 }
