@@ -25,3 +25,5 @@ All workflows are exported to a time stamped subfolder of the backup-folder.
 If the number of folders to keep is reached, the oldest folder is deleted.
 
 Star me, if you like it :-)
+
+[More n8n stuff here](https://marketmix.com/de/tag/n8n/)
