@@ -6,7 +6,7 @@ Backup your n8n Workflows to a Dropbox folder
 ## Install
 Import the workflow JSON into n8n.
 
-## Configure Nodes
+## Configuration
 ### Schedule Trigger Node
 Adapt the scheduling. Default is daily at 00:00
 ### Create a Folder Node
